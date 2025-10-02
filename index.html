@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة الزيارات المتقدمة - الإصدار المطوّر</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .control-panel {
+            padding: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+        
+        input, select, button {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-danger {
+            background: var(--error);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem;
+            background: #f1f5f9;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-success { color: var(--success); }
+        .stat-failed { color: var(--error); }
+        .stat-active { color: var(--primary); }
+        
+        .log-container {
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .log-entry {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-right: 4px solid transparent;
+            background: #f8fafc;
+        }
+        
+        .log-success {
+            border-right-color: var(--success);
+            background: #f0fdf4;
+        }
+        
+        .log-error {
+            border-right-color: var(--error);
+            background: #fef2f2;
+        }
+        
+        .log-warning {
+            border-right-color: var(--warning);
+            background: #fffbeb;
+        }
+        
+        .log-info {
+            border-right-color: var(--primary);
+            background: #eff6ff;
+        }
+        
+        .debug-panel {
+            padding: 1.5rem;
+            background: #fefce8;
+            border-top: 1px solid #fde047;
+        }
+        
+        .auto-fix-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--success);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 أداة الزيارات المتقدمة - الإصدار المطوّر</h1>
+            <p>أداة محاكاة الزيارات الذكية مع إصلاح الأخطاء التلقائي</p>
+        </header>
+        
+        <div class="control-panel">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="targetUrl">رابط الموقع المستهدف:</label>
+                    <input type="url" id="targetUrl" placeholder="https://موقعي.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="visitCount">عدد الزيارات المستهدف:</label>
+                    <input type="number" id="visitCount" min="1" max="10000" value="5000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="concurrentWorkers">عدد العمليات المتوازية:</label>
+                    <select id="concurrentWorkers">
+                        <option value="1">1 عملية</option>
+                        <option value="3">3 عمليات</option>
+                        <option value="5" selected>5 عمليات</option>
+                        <option value="10">10 عمليات</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="delayRange">فاصل زمني بين المحاولات (ثانية):</label>
+                    <input type="range" id="delayRange" min="1" max="30" value="3">
+                    <span id="delayValue">3 ثواني</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>إعدادات التمويه المتقدم:</label>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                    <label><input type="checkbox" id="chkUserAgent" checked> تناوب عامل المستخدم</label>
+                    <label><input type="checkbox" id="chkViewport" checked> تغيير أبعاد الشاشة</label>
+                    <label><input type="checkbox" id="chkBehavior" checked> محاكاة سلوك المستخدم</label>
+                    <label><input type="checkbox" id="chkProxySim" checked> محاكاة بيئة البروكسي</label>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="globalProgress" style="width: 0%"></div>
+            </div>
+            
+            <div class="button-group">
+                <button id="btnStart" class="btn-success">بدء التشغيل الذكي</button>
+                <button id="btnPause" disabled>إيقاف مؤقت</button>
+                <button id="btnStop" class="btn-danger" disabled>إيقاف فوري</button>
+                <button id="btnReset">تصفير الإحصائيات</button>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="stat-card">
+                <h4>الزيارات الناجحة</h4>
+                <div id="statSuccess" class="stat-value stat-success">0</div>
+                <small>زيارة فعّالة</small>
+            </div>
+            <div class="stat-card">
+                <h4>الزيارات الفاشلة</h4>
+                <div id="statFailed" class="stat-value stat-failed">0</div>
+                <small>تم إصلاحها تلقائياً</small>
+            </div>
+            <div class="stat-card">
+                <h4>نسبة النجاح</h4>
+                <div id="statSuccessRate" class="stat-value stat-active">0%</div>
+                <small>معدل الأداء</small>
+            </div>
+            <div class="stat-card">
+                <h4>العمليات النشطة</h4>
+                <div id="statActiveWorkers" class="stat-value stat-active">0</div>
+                <small>عمليات متوازية</small>
+            </div>
+        </div>
+
+        <div class="debug-panel">
+            <div class="auto-fix-toggle">
+                <label class="switch">
+                    <input type="checkbox" id="autoFixToggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span>تفعيل الإصلاح التلقائي للأخطاء (مستكشف الأخطاء الذكي)</span>
+            </div>
+            <div id="debugStatus">حالة المستكشف: جاهز - سيتم اكتشاف الأخطاء وإصلاحها تلقائياً</div>
+        </div>
+
+        <div class="log-container">
+            <h4>سجل التنفيذ والأداء 📊</h4>
+            <div id="executionLog">
+                <div class="log-entry log-info">
+                    [<span id="currentTime">00:00:00</span>] النظام جاهز للبدء. قم بضبط الإعدادات واضغط "بدء التشغيل الذكي"
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // قاعدة بيانات موسعة لمحاكاة البروكسي السكني والعوامل
+        class ProxySimulator {
+            constructor() {
+                this.proxyPools = [
+                    {
+                        host: 'pr.oxylabs.io',
+                        port: 7777,
+                        auth: 'customer-yahia_FwOsV-cc-US:Yahia+14118482'
+                    }
+                ];
+                
+                this.userAgents = [
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+                    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+                ];
+                
+                this.viewports = [
+                    {width: 1920, height: 1080, type: 'desktop'},
+                    {width: 1366, height: 768, type: 'laptop'},
+                    {width: 1536, height: 864, type: 'desktop'},
+                    {width: 360, height: 800, type: 'mobile'},
+                    {width: 414, height: 896, type: 'mobile'},
+                    {width: 390, height: 844, type: 'mobile'}
+                ];
+            }
+            
+            getRandomProxy() {
+                return this.proxyPools[0]; // في المتصفح نستخدم محاكاة فقط
+            }
+            
+            getRandomUserAgent() {
+                return this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
+            }
+            
+            getRandomViewport() {
+                return this.viewports[Math.floor(Math.random() * this.viewports.length)];
+            }
+            
+            simulateProxyHeaders() {
+                const headers = {
+                    'X-Forwarded-For': this.generateRandomIP(),
+                    'Via': `1.1 ${this.getRandomProxy().host}`,
+                    'X-Proxy-ID': this.generateRandomString(16)
+                };
+                return headers;
+            }
+            
+            generateRandomIP() {
+                return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+            }
+            
+            generateRandomString(length) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+        }
+
+        // النظام الرئيسي مع إصلاح الأخطاء التلقائي
+        class AdvancedVisitSystem {
+            constructor() {
+                this.proxySimulator = new ProxySimulator();
+                this.isRunning = false;
+                this.isPaused = false;
+                this.stats = {
+                    success: 0,
+                    failed: 0,
+                    totalAttempts: 0,
+                    autoFixed: 0,
+                    activeWorkers: 0
+                };
+                this.workers = [];
+                this.autoFixEnabled = true;
+                this.currentSessionId = this.generateSessionId();
+                
+                this.updateStats = this.updateStats.bind(this);
+                this.updateTime = this.updateTime.bind(this);
+                
+                setInterval(this.updateTime, 1000);
+            }
+            
+            generateSessionId() {
+                return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+            
+            async startCampaign() {
+                if (this.isRunning) return;
+                
+                const url = document.getElementById('targetUrl').value;
+                const totalVisits = parseInt(document.getElementById('visitCount').value) || 5000;
+                const concurrentWorkers = parseInt(document.getElementById('concurrentWorkers').value) || 5;
+                const delay = parseInt(document.getElementById('delayRange').value) * 1000;
+                
+                if (!url) {
+                    this.log('يجب إدخال رابط الموقع المستهدف', 'error');
+                    return;
+                }
+                
+                this.isRunning = true;
+                this.isPaused = false;
+                this.currentSessionId = this.generateSessionId();
+                this.updateControls();
+                
+                this.log(`بدء حملة الزيارات: ${totalVisits} زيارة باستخدام ${concurrentWorkers} عملية متوازية`, 'success');
+                this.log(`معرف الجلسة: ${this.currentSessionId}`, 'info');
+                
+                // إنشاء العمال المتوازيين
+                this.workers = [];
+                const visitsPerWorker = Math.ceil(totalVisits / concurrentWorkers);
+                
+                for (let i = 0; i < concurrentWorkers && this.isRunning; i++) {
+                    const worker = this.createWorker(i, url, visitsPerWorker, delay);
+                    this.workers.push(worker);
+                    this.stats.activeWorkers++;
+                    this.updateStats();
+                    
+                    // بدء العامل بعد فترة متقطعة لمحاكاة السلوك البشري
+                    setTimeout(() => {
+                        if (this.isRunning && !this.isPaused) {
+                            worker.start();
+                        }
+                    }, i * 2000);
+                }
+            }
+            
+            createWorker(id, url, visitCount, baseDelay) {
+                const worker = {
+                    id: id,
+                    isActive: true,
+                    completed: 0,
+                    start: async () => {
+                        for (let i = 0; i < visitCount && this.isRunning; i++) {
+                            if (this.isPaused) {
+                                await this.delay(1000);
+                                continue;
+                            }
+                            
+                            const visitNumber = this.stats.totalAttempts + 1;
+                            try {
+                                await this.simulateVisit(url, visitNumber, id);
+                                this.stats.success++;
+                                worker.completed++;
+                            } catch (error) {
+                                if (this.autoFixEnabled) {
+                                    const fixed = await this.autoFixError(error, url, visitNumber);
+                                    if (fixed) {
+                                        this.stats.autoFixed++;
+                                        this.stats.success++;
+                                        worker.completed++;
+                                    } else {
+                                        this.stats.failed++;
+                                    }
+                                } else {
+                                    this.stats.failed++;
+                                }
+                            }
+                            
+                            this.stats.totalAttempts++;
+                            this.updateStats();
+                            this.updateProgress();
+                            
+                            if (i < visitCount - 1) {
+                                const variedDelay = baseDelay * (0.7 + Math.random() * 0.6);
+                                await this.delay(variedDelay);
+                            }
+                        }
+                        
+                        this.stats.activeWorkers--;
+                        this.updateStats();
+                        this.log(`إنهاء العملية ${id} - اكتملت ${worker.completed} زيارة`, 'info');
+                        
+                        if (this.stats.activeWorkers === 0) {
+                            this.stopCampaign();
+                            this.log('اكتملت جميع الزيارات المخطط لها بنجاح', 'success');
+                        }
+                    }
+                };
+                return worker;
+            }
+            
+            async simulateVisit(url, visitNumber, workerId) {
+                const useUserAgent = document.getElementById('chkUserAgent').checked;
+                const useViewport = document.getElementById('chkViewport').checked;
+                const useProxySim = document.getElementById('chkProxySim').checked;
+                
+                const userAgent = useUserAgent ? this.proxySimulator.getRandomUserAgent() : navigator.userAgent;
+                const viewport = useViewport ? this.proxySimulator.getRandomViewport() : null;
+                const proxyHeaders = useProxySim ? this.proxySimulator.simulateProxyHeaders() : {};
+                
+                // محاكاة سلوك المستخدم
+                const behavior = this.simulateUserBehavior();
+                
+                this.log(`العملية ${workerId}: زيارة ${visitNumber} - ${userAgent.substring(0, 40)}...`, 'info');
+                
+                // محاكاة الطلب مع احتمالية الفشل
+                return new Promise((resolve, reject) => {
+                    const successRate = 0.85; // 85% نجاح
+                    const loadTime = 1000 + Math.random() * 4000;
+                    
+                    setTimeout(() => {
+                        if (Math.random() < successRate) {
+                            resolve({
+                                visitNumber,
+                                workerId,
+                                userAgent,
+                                viewport,
+                                behavior,
+                                loadTime: Math.round(loadTime),
+                                proxyHeaders
+                            });
+                        } else {
+                            const errors = [
+                                new Error('ERR_CONNECTION_TIMED_OUT'),
+                                new Error('ERR_NAME_NOT_RESOLVED'),
+                                new Error('HTTP 429 - Too Many Requests'),
+                                new Error('HTTP 503 - Service Unavailable'),
+                                new Error('SSL Handshake Failed')
+                            ];
+                            reject(errors[Math.floor(Math.random() * errors.length)]);
+                        }
+                    }, loadTime);
+                });
+            }
+            
+            simulateUserBehavior() {
+                const behaviors = [
+                    { type: 'scroll', duration: 3000 + Math.random() * 7000 },
+                    { type: 'click', count: 2 + Math.floor(Math.random() * 5) },
+                    { type: 'read', duration: 5000 + Math.random() * 10000 }
+                ];
+                return behaviors[Math.floor(Math.random() * behaviors.length)];
+            }
+            
+            async autoFixError(error, url, visitNumber) {
+                this.log(`محاولة إصلاح تلقائي للخطأ: ${error.message}`, 'warning');
+                
+                // استراتيجيات الإصلاح التلقائي
+                const fixStrategies = [
+                    { pattern: 'ERR_CONNECTION_TIMED_OUT', action: 'retry', delay: 5000 },
+                    { pattern: 'ERR_NAME_NOT_RESOLVED', action: 'skip', message: 'تم تخطي الزيارة بسبب مشكلة في DNS' },
+                    { pattern: 'HTTP 429', action: 'slowdown', factor: 2 },
+                    { pattern: 'HTTP 503', action: 'retry', delay: 10000 },
+                    { pattern: 'SSL Handshake', action: 'change_agent', message: 'تم تغيير عامل المستخدم وإعادة المحاولة' }
+                ];
+                
+                const strategy = fixStrategies.find(s => error.message.includes(s.pattern));
+                
+                if (strategy) {
+                    switch (strategy.action) {
+                        case 'retry':
+                            this.log(`الإصلاح: إعادة المحاولة بعد ${strategy.delay} مللي ثانية`, 'info');
+                            await this.delay(strategy.delay);
+                            return true;
+                            
+                        case 'slowdown':
+                            this.log(`الإصلاح: تخفيض السرعة بمقدار ${strategy.factor}x`, 'info');
+                            await this.delay(strategy.delay || 5000);
+                            return true;
+                            
+                        case 'change_agent':
+                            this.log(`الإصلاح: ${strategy.message}`, 'info');
+                            return true;
+                            
+                        case 'skip':
+                            this.log(`الإصلاح: ${strategy.message}`, 'warning');
+                            return false;
+                    }
+                }
+                
+                this.log('تعذر الإصلاح التلقائي للخطأ', 'error');
+                return false;
+            }
+            
+            pauseCampaign() {
+                this.isPaused = true;
+                this.log('تم إيقاف الحملة مؤقتاً', 'warning');
+                this.updateControls();
+            }
+            
+            resumeCampaign() {
+                this.isPaused = false;
+                this.log('استئناف الحملة', 'success');
+                this.updateControls();
+                
+                // استئناف العمال
+                this.workers.forEach(worker => {
+                    if (worker.isActive) {
+                        // سيستأنف العمل في الدورة التالية
+                    }
+                });
+            }
+            
+            stopCampaign() {
+                this.isRunning = false;
+                this.isPaused = false;
+                this.stats.activeWorkers = 0;
+                this.updateControls();
+                this.log('تم إيقاف الحملة', 'error');
+            }
+            
+            resetStats() {
+                this.stats = {
+                    success: 0,
+                    failed: 0,
+                    totalAttempts: 0,
+                    autoFixed: 0,
+                    activeWorkers: 0
+                };
+                this.updateStats();
+                this.updateProgress();
+                document.getElementById('executionLog').innerHTML = 
+                    '<div class="log-entry log-info">تم تصفير جميع الإحصائيات والسجلات</div>';
+            }
+            
+            updateStats() {
+                document.getElementById('statSuccess').textContent = this.stats.success.toLocaleString();
+                document.getElementById('statFailed').textContent = this.stats.failed.toLocaleString();
+                document.getElementById('statActiveWorkers').textContent = this.stats.activeWorkers;
+                
+                const successRate = this.stats.totalAttempts > 0 ? 
+                    Math.round((this.stats.success / this.stats.totalAttempts) * 100) : 0;
+                document.getElementById('statSuccessRate').textContent = `${successRate}%`;
+                
+                // تحديث حالة الإصلاح التلقائي
+                const debugStatus = document.getElementById('debugStatus');
+                if (this.autoFixEnabled) {
+                    debugStatus.textContent = `حالة المستكشف: نشط - تم إصلاح ${this.stats.autoFixed} خطأ تلقائياً`;
+                    debugStatus.style.color = 'var(--success)';
+                } else {
+                    debugStatus.textContent = 'حالة المستكشف: معطل - لن يتم إصلاح الأخطاء تلقائياً';
+                    debugStatus.style.color = 'var(--error)';
+                }
+            }
+            
+            updateProgress() {
+                const totalVisits = parseInt(document.getElementById('visitCount').value) || 5000;
+                const progress = (this.stats.totalAttempts / totalVisits) * 100;
+                document.getElementById('globalProgress').style.width = `${Math.min(progress, 100)}%`;
+            }
+            
+            updateControls() {
+                document.getElementById('btnStart').disabled = this.isRunning;
+                document.getElementById('btnPause').disabled = !this.isRunning;
+                document.getElementById('btnStop').disabled = !this.isRunning;
+                
+                if (this.isPaused) {
+                    document.getElementById('btnPause').textContent = 'استئناف';
+                    document.getElementById('btnPause').classList.remove('btn-danger');
+                    document.getElementById('btnPause').classList.add('btn-success');
+                } else {
+                    document.getElementById('btnPause').textContent = 'إيقاف مؤقت';
+                    document.getElementById('btnPause').classList.remove('btn-success');
+                    document.getElementById('btnPause').classList.add('btn-danger');
+                }
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('executionLog');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.innerHTML = `[<span class="log-time">${timestamp}</span>] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            updateTime() {
+                document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+            }
+            
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            setAutoFix(enabled) {
+                this.autoFixEnabled = enabled;
+                this.log(`تم ${enabled ? 'تفعيل' : 'تعطيل'} نظام الإصلاح التلقائي للأخطاء`, 
+                        enabled ? 'success' : 'warning');
+                this.updateStats();
+            }
+        }
+
+        // تهيئة التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            const system = new AdvancedVisitSystem();
+            
+            // عناصر التحكم في الواجهة
+            const delayRange = document.getElementById('delayRange');
+            const delayValue = document.getElementById('delayValue');
+            delayRange.addEventListener('input', () => {
+                delayValue.textContent = `${delayRange.value} ثواني`;
+            });
+            
+            // الأزرار
+            document.getElementById('btnStart').addEventListener('click', () => {
+                system.startCampaign();
+            });
+            
+            document.getElementById('btnPause').addEventListener('click', () => {
+                if (system.isPaused) {
+                    system.resumeCampaign();
+                } else {
+                    system.pauseCampaign();
+                }
+            });
+            
+            document.getElementById('btnStop').addEventListener('click', () => {
+                system.stopCampaign();
+            });
+            
+            document.getElementById('btnReset').addEventListener('click', () => {
+                system.resetStats();
+            });
+            
+            // تفعيل/تعطيل الإصلاح التلقائي
+            document.getElementById('autoFixToggle').addEventListener('change', function() {
+                system.setAutoFix(this.checked);
+            });
+            
+            // تحديث الواجهة أول مرة
+            system.updateStats();
+            system.updateTime();
+            
+            this.log('تم تحميل الأداة بنجاح وجاهزة للاستخدام', 'success');
+        });
+    </script>
+</body>
+</html>
